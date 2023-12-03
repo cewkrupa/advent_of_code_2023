@@ -5,21 +5,21 @@ import (
 	"fmt"
 )
 
-func Init(one func(i string), two func(i string)) {
-	var input string
+func Init(one func(fileName string), two func(fileName string)) {
+	var fileName string
 	var part int
-	flag.StringVar(&input, "input", "./test_input.txt", "name of input file")
+	flag.StringVar(&fileName, "fileName", "./test_input.txt", "name of input file")
 	flag.IntVar(&part, "part", 0, "part of day")
 	flag.Parse()
 
-	fmt.Printf("input file: %v\n", input)
+	fmt.Printf("input file: %v\n", fileName)
 
 	switch part {
 	case 1:
-		one(input)
+		one(fileName)
 	case 2:
-		two(input)
+		two(fileName)
 	default:
-		one(input)
+		one(fileName)
 	}
 }
