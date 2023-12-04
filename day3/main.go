@@ -21,13 +21,7 @@ type NumberEntry struct {
 	isPart bool
 }
 
-func one(fileName string) {
-	fmt.Println("one")
-
-	file, err := os.Open(fileName)
-	if err != nil {
-		panic(err)
-	}
+func one(file *os.File) {
 
 	numMap, symbolMap := buildMap(file)
 
@@ -129,13 +123,7 @@ func buildMap(file *os.File) (map[Coordinate]*NumberEntry, map[Coordinate]string
 	return numMap, symbolMap
 }
 
-func two(fileName string) {
-	fmt.Println("two")
-	file, err := os.Open(fileName)
-	if err != nil {
-		panic(err)
-	}
-
+func two(file *os.File) {
 	numMap, symbolMap := buildMap(file)
 
 	var gearSum int
