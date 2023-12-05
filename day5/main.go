@@ -52,35 +52,43 @@ func parseAlmanac(f *os.File) ([]int, AlmanacMap) {
 	return seeds, almanac
 }
 
-type AlmanacMapEntry struct {
+type AlmanacCategoryEntry struct {
 	destRangeStart int
 	srcRangeStart  int
 	rangeLength    int
 }
 
-type AlmanacMap map[string]AlmanacCategoryMap
+type AlmanacMap map[string]AlmanacCategoryList
+type AlmanacCategoryList []AlmanacCategoryEntry
 
-type AlmanacCategoryMap map[int]int
+func (l AlmanacCategoryList) apply(src int) int {
+	var correspondingEntry *AlmanacCategoryEntry
+	for _, e := range l {
+		e := &e
+		if src >= e.srcRangeStart && src < e.srcRangeStart+e.rangeLength {
+			correspondingEntry = e
+			break
+		}
+	}
 
-func (m AlmanacCategoryMap) apply(src int) int {
-	dest, ok := m[src]
-	if !ok {
+	if correspondingEntry == nil {
 		return src
 	} else {
-		return dest
+		offset := src - correspondingEntry.srcRangeStart
+		return correspondingEntry.destRangeStart + offset
 	}
 }
 
 func parseMaps(lines []string) AlmanacMap {
 
 	mapMap := AlmanacMap{
-		"seed-to-soil":            make(AlmanacCategoryMap),
-		"soil-to-fertilizer":      make(AlmanacCategoryMap),
-		"fertilizer-to-water":     make(AlmanacCategoryMap),
-		"water-to-light":          make(AlmanacCategoryMap),
-		"light-to-temperature":    make(AlmanacCategoryMap),
-		"temperature-to-humidity": make(AlmanacCategoryMap),
-		"humidity-to-location":    make(AlmanacCategoryMap),
+		"seed-to-soil":            AlmanacCategoryList{},
+		"soil-to-fertilizer":      AlmanacCategoryList{},
+		"fertilizer-to-water":     AlmanacCategoryList{},
+		"water-to-light":          AlmanacCategoryList{},
+		"light-to-temperature":    AlmanacCategoryList{},
+		"temperature-to-humidity": AlmanacCategoryList{},
+		"humidity-to-location":    AlmanacCategoryList{},
 	} // map... map map map, map map.
 
 	// the current map type
@@ -103,18 +111,13 @@ func parseMaps(lines []string) AlmanacMap {
 			if len(digits) != 3 {
 				panic(errors.New("error: not enough digits for entry"))
 			}
-			entry := AlmanacMapEntry{
+			entry := AlmanacCategoryEntry{
 				destRangeStart: digits[0],
 				srcRangeStart:  digits[1],
 				rangeLength:    digits[2],
 			}
 
-			currMap := mapMap[curr]
-
-			for i := entry.rangeLength; i > 0; i-- {
-				offset := i - 1
-				currMap[entry.srcRangeStart+offset] = entry.destRangeStart + offset
-			}
+			mapMap[curr] = append(mapMap[curr], entry)
 		}
 	}
 	return mapMap
