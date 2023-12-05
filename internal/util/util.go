@@ -4,9 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 func Init(one func(inputFile *os.File), two func(inputFile *os.File)) {
+	startTime := time.Now()
+
 	var fileName string
 	var part int
 	flag.StringVar(&fileName, "fileName", "./test_input.txt", "name of input file")
@@ -30,4 +33,6 @@ func Init(one func(inputFile *os.File), two func(inputFile *os.File)) {
 	default:
 		one(file)
 	}
+	endTime := time.Now()
+	fmt.Printf("completed in %v ms\n", endTime.Sub(startTime).Milliseconds())
 }

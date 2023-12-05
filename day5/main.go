@@ -60,6 +60,18 @@ type AlmanacCategoryEntry struct {
 }
 
 type AlmanacMap map[string]AlmanacCategoryList
+
+func (a AlmanacMap) apply(seed int) int {
+	soil := a["seed-to-soil"].apply(seed)
+	fertilizer := a["soil-to-fertilizer"].apply(soil)
+	water := a["fertilizer-to-water"].apply(fertilizer)
+	light := a["water-to-light"].apply(water)
+	temp := a["light-to-temperature"].apply(light)
+	humidity := a["temperature-to-humidity"].apply(temp)
+	loc := a["humidity-to-location"].apply(humidity)
+	return loc
+}
+
 type AlmanacCategoryList []AlmanacCategoryEntry
 
 func (l AlmanacCategoryList) apply(src int) int {
@@ -143,32 +155,70 @@ func two(f *os.File) {
 	seedRanges, almanac := parseAlmanac(f)
 
 	lowestLoc := math.MaxInt
-	// real input:  202517468 131640971
-	//  202,517,468 131,640,971
 	for i := 0; i < len(seedRanges); i += 2 {
 		start := seedRanges[i]
 		length := seedRanges[i+1]
+
 		fmt.Printf("Applying seed range %v, %v\n", start, length)
 
-		// TODO: I wonder if we can speed things up by batching these applies into channels
-		// so we can parallelize
+		chunkNumber := 50
 
-		// brute force, oof
-		for j := 0; j < length; j++ {
-			seed := start + j
-			soil := almanac["seed-to-soil"].apply(seed)
-			fertilizer := almanac["soil-to-fertilizer"].apply(soil)
-			water := almanac["fertilizer-to-water"].apply(fertilizer)
-			light := almanac["water-to-light"].apply(water)
-			temp := almanac["light-to-temperature"].apply(light)
-			humidity := almanac["temperature-to-humidity"].apply(temp)
-			loc := almanac["humidity-to-location"].apply(humidity)
+		receiver := make(chan int)
+		chunks := getRangeChunks(start, length, chunkNumber)
 
-			if loc < lowestLoc {
-				lowestLoc = loc
+		for _, c := range chunks {
+			go findLowestInChunk(almanac, c.start, c.size, receiver)
+		}
+
+		for j := 0; j < len(chunks); j++ {
+			select {
+			case l := <-receiver:
+				if l < lowestLoc {
+					lowestLoc = l
+				}
 			}
 		}
+
 	}
 
 	fmt.Printf("Lowest location: %v\n", lowestLoc)
+}
+
+type Chunk struct {
+	start int
+	size  int
+}
+
+func getRangeChunks(start int, length int, chunkNumber int) []Chunk {
+	var chunks []Chunk
+
+	chunkSize := length / chunkNumber
+	var sizeSum int
+	for i := 0; i < chunkNumber; i++ {
+		chunk := Chunk{
+			start: start + sizeSum,
+			size:  chunkSize,
+		}
+		if i == chunkNumber-1 {
+			chunk.size = length - sizeSum
+		}
+		sizeSum += chunk.size
+		chunks = append(chunks, chunk)
+	}
+	if sizeSum != length {
+		panic("invalid chunk lengths")
+	}
+	return chunks
+}
+
+func findLowestInChunk(a AlmanacMap, chunkStart int, chunkSize int, out chan<- int) {
+	lowest := math.MaxInt
+	for i := 0; i < chunkSize; i++ {
+		src := chunkStart + i
+		loc := a.apply(src)
+		if loc < lowest {
+			lowest = loc
+		}
+	}
+	out <- lowest
 }
