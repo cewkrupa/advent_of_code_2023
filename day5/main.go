@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"regexp"
 	"slices"
@@ -139,5 +140,35 @@ func parseDigits(line string) []int {
 }
 
 func two(f *os.File) {
+	seedRanges, almanac := parseAlmanac(f)
 
+	lowestLoc := math.MaxInt
+	// real input:  202517468 131640971
+	//  202,517,468 131,640,971
+	for i := 0; i < len(seedRanges); i += 2 {
+		start := seedRanges[i]
+		length := seedRanges[i+1]
+		fmt.Printf("Applying seed range %v, %v\n", start, length)
+
+		// TODO: I wonder if we can speed things up by batching these applies into channels
+		// so we can parallelize
+
+		// brute force, oof
+		for j := 0; j < length; j++ {
+			seed := start + j
+			soil := almanac["seed-to-soil"].apply(seed)
+			fertilizer := almanac["soil-to-fertilizer"].apply(soil)
+			water := almanac["fertilizer-to-water"].apply(fertilizer)
+			light := almanac["water-to-light"].apply(water)
+			temp := almanac["light-to-temperature"].apply(light)
+			humidity := almanac["temperature-to-humidity"].apply(temp)
+			loc := almanac["humidity-to-location"].apply(humidity)
+
+			if loc < lowestLoc {
+				lowestLoc = loc
+			}
+		}
+	}
+
+	fmt.Printf("Lowest location: %v\n", lowestLoc)
 }
