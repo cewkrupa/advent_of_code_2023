@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aoc-2023/internal/util"
+	"aoc-2023/internal/util/v1"
 	"bytes"
 	"errors"
 	"fmt"
@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	util.Init(one, two)
+	v1.Init(one, two)
 }
 
 func one(f *os.File) {

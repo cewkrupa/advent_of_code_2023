@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aoc-2023/internal/util"
+	"aoc-2023/internal/util/v1"
 	"bufio"
 	"fmt"
 	"math"
@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	util.Init(one, two)
+	v1.Init(one, two)
 }
 
 type Race struct {

@@ -1,11 +1,20 @@
-package util
+package v1
 
 import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 )
+
+var digitRegex = regexp.MustCompile(`(\d+)`)
+
+const DigitPattern = `(\d+)`
+
+func DigitRegex() *regexp.Regexp {
+	return regexp.MustCompile(DigitPattern)
+}
 
 func Init(one func(inputFile *os.File), two func(inputFile *os.File)) {
 	startTime := time.Now()
